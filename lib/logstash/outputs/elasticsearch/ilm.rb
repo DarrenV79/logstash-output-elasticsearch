@@ -1,8 +1,6 @@
 module LogStash; module Outputs; class ElasticSearch
   module Ilm
 
-    ILM_POLICY_PATH = "default-ilm-policy.json"
-
     def setup_ilm
       return unless ilm_in_use?
         logger.warn("Overwriting supplied index #{@index} with rollover alias #{@ilm_rollover_alias}") unless default_index?(@index)
@@ -81,7 +79,9 @@ module LogStash; module Outputs; class ElasticSearch
 
     def maybe_create_ilm_policy
       if ilm_policy_default?
-          client.ilm_policy_put(ilm_policy, policy_payload) unless client.ilm_policy_exists?(ilm_policy)
+        client.ilm_policy_put(ilm_policy, policy_payload(LogStash::Outputs::ElasticSearch::DEFAULT_POLICY_FILE)) unless client.ilm_policy_exists?(ilm_policy)
+      elsif !ilm_policy_file.nil?
+        client.ilm_policy_put(ilm_policy, policy_payload(ilm_policy_file)) unless client.ilm_policy_exists?(ilm_policy)        
       else
         raise LogStash::ConfigurationError, "The specified ILM policy #{ilm_policy} does not exist on your Elasticsearch instance" unless client.ilm_policy_exists?(ilm_policy)
       end
@@ -105,8 +105,9 @@ module LogStash; module Outputs; class ElasticSearch
       }
     end
 
-    def policy_payload
-      policy_path = ::File.expand_path(ILM_POLICY_PATH, ::File.dirname(__FILE__))
+    def policy_payload(file)
+      raise LogStash::ConfigurationError, "The specified ILM policy file #{ilm_policy_file} does not exist" unless ::File.exists?("#{ilm_policy_file}")      
+      policy_path = ::File.expand_path(file, ::File.dirname(__FILE__)) 
       LogStash::Json.load(::IO.read(policy_path))
     end
   end

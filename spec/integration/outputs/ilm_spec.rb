@@ -375,6 +375,21 @@ if ESHelper.es_version_satisfies?(">= 6.6")
         end
       end
 
+      context 'when using a custom policy file' do
+        let (:ilm_policy_name) {"logstash-policy-custom"}
+        let (:settings) { super.merge("ilm_policy" => ilm_policy_name, "ilm_policy_file" => LogStash::Outputs::ElasticSearch::DEFAULT_POLICY_FILE)}
+
+        before do
+          expect{get_policy(@es, ilm_policy_name)}.to raise_error(Elasticsearch::Transport::Transport::Errors::NotFound)
+        end
+
+        it 'should install the custom policy file' do
+          subject.register
+          sleep(1)
+          expect{get_policy(@es, ilm_policy_name)}.not_to raise_error
+        end
+      end
+
       context 'with the default template' do
         it 'should create the rollover alias' do
           expect(@es.indices.exists_alias(name: expected_index)).to be_falsey

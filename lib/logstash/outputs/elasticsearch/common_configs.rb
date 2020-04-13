@@ -5,6 +5,7 @@ module LogStash; module Outputs; class ElasticSearch
 
     DEFAULT_INDEX_NAME = "logstash-%{+yyyy.MM.dd}"
     DEFAULT_POLICY = "logstash-policy"
+    DEFAULT_POLICY_FILE = "default-ilm-policy.json"
     DEFAULT_ROLLOVER_ALIAS = 'logstash'
 
     DEFAULT_HOST = ::LogStash::Util::SafeURI.new("//127.0.0.1")
@@ -161,6 +162,10 @@ module LogStash; module Outputs; class ElasticSearch
 
       # ILM policy to use, if undefined the default policy will be used.
       mod.config :ilm_policy, :validate => :string, :default => DEFAULT_POLICY
+
+      # ILM policy file to use, if undefined the default policy will be used (default-ilm-policy.json).
+      # nil by default to use an existing policy that may be defined rather than to load one from a file.
+      mod.config :ilm_policy_file, :validate => :string, :default => nil
 
     end
   end
